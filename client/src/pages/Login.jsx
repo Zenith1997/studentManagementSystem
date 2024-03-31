@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Avatar from "@mui/material/Avatar";
@@ -15,11 +16,15 @@ import HubIcon from "@mui/icons-material/Hub";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
+import CircularProgress from "@mui/material/CircularProgress"; // Import CircularProgress for loader
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import axios from "axios"; // Import Axios for making HTTP requests
-
+import axios from "axios";
+import theme from "../Theme/Theme"; // Import custom theme
 function SignIn() {
   const [token, setToken] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(false); // State to manage loading
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -28,26 +33,30 @@ function SignIn() {
     const password = formData.get("password");
 
     try {
-      // Make a POST request to your backend API
+      setLoading(true); // Set loading to true when request starts
       const response = await axios.post(
         `${process.env.REACT_APP_BASE_URL}/auth/login`,
-        { email, password }
+        {
+          email,
+          password,
+        }
       );
-      // Handle response
       console.log("Login successful:", response.data);
-      setToken(response.data.token); // Save the token
-      // Show success toast
+      setIsLoggedIn(true);
+      setToken(response.data.token);
       toast.success("Login successful");
+      
+      navigate("/home");
     } catch (error) {
-      // Handle error
       console.error("Login failed:", error.message);
-      // Show error toast
       toast.error("Username or password is wrong");
+    } finally {
+      setLoading(false); // Set loading to false when request ends (whether success or failure)
     }
   };
 
   return (
-    <ThemeProvider theme={createTheme()}>
+    <ThemeProvider theme={createTheme(theme)}>
       <Container component="main" maxWidth="xs">
         <CssBaseline />
         <Box
@@ -56,6 +65,10 @@ function SignIn() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            border: "1px solid #ccc",
+            borderRadius: "5px",
+            padding: "20px",
+            backgroundColor: "#f8f9fa",
           }}
         >
           <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
@@ -68,7 +81,7 @@ function SignIn() {
             component="form"
             onSubmit={handleSubmit}
             noValidate
-            sx={{ mt: 1 }}
+            sx={{ mt: 3, width: "100%" }}
           >
             <TextField
               margin="normal"
@@ -90,36 +103,20 @@ function SignIn() {
               id="password"
               autoComplete="current-password"
             />
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Remember me"
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-            >
+            <Button type="submit" fullWidth variant="contained" sx={{ mt: 3 }}>
               Sign In
             </Button>
-            <Grid container>
-              <Grid item xs>
-                {/* Add forgot password link */}
-                <Link href="#" variant="body2">
-                  Forgot password?
-                </Link>
-              </Grid>
-              <Grid item>
-                {/* Add sign up link */}
-                <Link href="#" variant="body2">
-                  {"Don't have an account? Sign Up"}
-                </Link>
-              </Grid>
-            </Grid>
+            {loading && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                <CircularProgress color="secondary" />{" "}
+                {/* Fancy loader with secondary color */}
+              </Box>
+            )}{" "}
+            {/* Conditional rendering of loader */}
           </Box>
         </Box>
       </Container>
-      <ToastContainer /> {/* Toast container for displaying toast messages */}
+      <ToastContainer />
     </ThemeProvider>
   );
 }
