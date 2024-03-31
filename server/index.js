@@ -1,13 +1,13 @@
 const express = require("express");
-const pool = require('./configs/database');
-const initializeDatabase = require('./db/db');
+const pool = require("./configs/database");
+const initializeDatabase = require("./db/db");
 const app = express();
-const port = 3000;
+const port = 8080;
+const cors = require('cors');
 app.use(express.json());
-const authRoutes = require('./routes/authroutes');
-
-
-
+const authRoutes = require("./routes/authroutes");
+require("dotenv").config();
+app.use(cors({ origin: "http://localhost:3000" }));
 
 // Import the code to initialize database connection
 
@@ -15,15 +15,14 @@ const authRoutes = require('./routes/authroutes');
 
 initializeDatabase.getConnection((err, connection) => {
   if (err) {
-    console.error('Error connecting to the database:', err);
+    console.error("Error connecting to the database:", err);
     return;
   }
-  console.log('Connected to the database');
+  console.log("Connected to the database");
   connection.release();
 });
 
-
-app.use("/auth",authRoutes);
+app.use("/auth", authRoutes);
 
 // Start the server
 app.listen(port, () => {
