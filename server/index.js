@@ -6,6 +6,7 @@ const port = 8080;
 const cors = require('cors');
 app.use(express.json());
 const authRoutes = require("./routes/authroutes");
+const studRoutes = require("./routes/studentroutes");
 require("dotenv").config();
 app.use(cors({ origin: "http://localhost:3000" }));
 
@@ -23,6 +24,7 @@ initializeDatabase.getConnection((err, connection) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/std", studRoutes);
 
 // Start the server
 app.listen(port, () => {
