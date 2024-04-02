@@ -11,6 +11,7 @@ import ErrorPage from "./pages/errorPage";
 import Login from "./pages/Login";
 import StudentDetails from "./pages/StudentDetails";
 import AddStudent from "./pages/AddStudent";
+import UpdateStudent from "./pages/UpdateStudent";
 
 const router = createBrowserRouter([
   {
@@ -31,6 +32,11 @@ const router = createBrowserRouter([
   {
     path: "/add-student",
     element: <AddStudent />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/update-student/:registrationId",
+    element: <UpdateStudent />,
     errorElement: <ErrorPage />,
   },
 ]);

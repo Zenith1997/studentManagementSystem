@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AppBar from "../components/Navbar";
+import { get, remove } from "../api/api";
 import {
   TableContainer,
   Table,
@@ -19,21 +20,19 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setToken(token);
-    console.log(token);
-    axios
-      .get(`${process.env.REACT_APP_BASE_URL}/std`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((response) => {
-        setData(response.data);
-      })
-      .catch((error) => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        setToken(token);
+        console.log(token);
+        const response = await get("/std");
+        setData(response);
+      } catch (error) {
         console.error("Error fetching data:", error);
-      });
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleView = (registrationId) => {
@@ -42,23 +41,17 @@ function Home() {
 
   const handleDelete = async (registrationId) => {
     try {
-      const response = await axios.delete(
-        `${process.env.REACT_APP_BASE_URL}/std/${registrationId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log(response.data);
-      // If deletion is successful, filter out the deleted record from the data state
+      await remove(`/std/${registrationId}`);
+      console.log("Successfully deleted.");
       setData(data.filter((row) => row.registration_id !== registrationId));
     } catch (error) {
       console.error("Error deleting data:", error);
     }
   };
 
-  const handleUpdate = (registrationId) => {};
+  const handleUpdate = (registrationId) => {
+    navigate(`/update-student/${registrationId}`);
+  };
 
   const handleAddNew = () => {
     // Redirect to the page where you can add a new student
@@ -71,23 +64,14 @@ function Home() {
 
       <TableContainer
         sx={{
-          marginTop: "10px",
+          marginTop: "70px",
           padding: "1px",
           border: "1px solid #ccc",
           borderRadius: "5px",
-          backgroundColor: "#f8f9fa",
+          backgroundColor: "#f1f2f3",
         }}
       >
-        <div>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleAddNew}
-            sx={{ margin: "10px" }}
-          >
-            Add New Student
-          </Button>
-        </div>
+        <div></div>
         <Table>
           <TableHead>
             <Button

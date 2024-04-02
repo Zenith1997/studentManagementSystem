@@ -5,10 +5,10 @@ import { makeStyles } from "@mui/styles";
 import { Typography, Paper } from "@mui/material";
 import Box from "@mui/material/Box";
 import Navbar from "../components/Navbar";
-
+import { get } from "../api/api";
 const useStyles = makeStyles({
   formContainer: {
-    backgroundColor: "#89f9f9",
+    backgroundColor: "#f1f2f3",
     display: "flex",
     marginTop: "50px",
     flexDirection: "column",
@@ -28,15 +28,17 @@ function StudentDetails() {
   const classes = useStyles();
 
   useEffect(() => {
-    axios
-      .get(`${process.env.REACT_APP_BASE_URL}/std/${registrationId}`)
-      .then((response) => {
-        setStudentDetails(response.data[0]);
-        setDob(response.data[0].dob);
-      })
-      .catch((error) => {
+    const fetchStudentDetails = async () => {
+      try {
+        const response = await get(`/std/${registrationId}`);
+        setStudentDetails(response[0]);
+        setDob(response[0].dob);
+      } catch (error) {
         console.error("Error fetching student details:", error);
-      });
+      }
+    };
+
+    fetchStudentDetails();
   }, [registrationId]);
 
   if (!studentDetails) {

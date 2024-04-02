@@ -7,6 +7,7 @@ const cors = require('cors');
 app.use(express.json());
 const authRoutes = require("./routes/authroutes");
 const studRoutes = require("./routes/studentroutes");
+const { verifyToken } = require("./middleware/authMiddleware");
 require("dotenv").config();
 app.use(cors({ origin: "http://localhost:3000" }));
 
@@ -24,7 +25,9 @@ initializeDatabase.getConnection((err, connection) => {
 });
 
 app.use("/auth", authRoutes);
-app.use("/std", studRoutes);
+
+// Apply verifyToken middleware specifically to the studRoutes
+app.use("/std",studRoutes);
 
 // Start the server
 app.listen(port, () => {

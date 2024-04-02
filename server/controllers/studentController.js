@@ -1,9 +1,10 @@
 const pool = require("../db/db"); // Import your MySQL pool
 
-exports.getStudentDetails = async (req, res, nex) => {
+exports.getStudentDetails = async (req, res, next) => {
   try {
-    const token = req.headers.authorization.split(" ")[1];
-    console.log;
+   //// const token = req.headers.authorization.split(" ")[1];
+   // console.log(token);
+
     // Query to retrieve required data from the Student table
     const [studentRows] = await pool.query(
       "SELECT registration_id, first_name, last_name, contact_number, address FROM Student"
@@ -16,6 +17,7 @@ exports.getStudentDetails = async (req, res, nex) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 exports.addStudentDetails = async (req, res) => {
   const {
     registrationId,
