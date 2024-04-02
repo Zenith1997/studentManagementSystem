@@ -1,20 +1,32 @@
-const pool = require('../db/db'); // Import your MySQL pool
+const pool = require("../db/db"); // Import your MySQL pool
 
-exports.getStudentDetails = async (req, res) => {
+exports.getStudentDetails = async (req, res, nex) => {
   try {
+    const token = req.headers.authorization.split(" ")[1];
+    console.log;
     // Query to retrieve required data from the Student table
-    const [studentRows] = await pool.query('SELECT registration_id, first_name, last_name, contact_number, address FROM Student');
+    const [studentRows] = await pool.query(
+      "SELECT registration_id, first_name, last_name, contact_number, address FROM Student"
+    );
 
     // Send the retrieved data as a response
     res.json(studentRows);
   } catch (error) {
     console.error("Error retrieving student details:", error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
-
 exports.addStudentDetails = async (req, res) => {
-  const { first_name, middle_name, last_name, contact_number, address, classroom_name, subject_names } = req.body;
+  const {
+    registrationId,
+    firstName,
+    middleName,
+    lastName,
+    contactNumber,
+    address,
+    dob,
+  } = req.body;
+  console.log(registrationId); // Logging registrationId received from request
 
   const transaction = await pool.getConnection();
 
@@ -23,53 +35,31 @@ exports.addStudentDetails = async (req, res) => {
 
     // Insert into Student table
     const insertStudentQuery = `
-      INSERT INTO Student (first_name, middle_name, last_name, contact_number, address)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO Student (registration_id, first_name, middle_name, last_name, contact_number, address, dob)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
-    const [studentResult] = await transaction.query(insertStudentQuery, [first_name, middle_name, last_name, contact_number, address]);
-    const registrationId = studentResult.insertId;
-
-    // Get classroom_id from classroom_name
-    const [classroomRow] = await transaction.query('SELECT classroom_id FROM ClassRoom WHERE name = ?', [classroom_name]);
-    const classroom_id = classroomRow[0].classroom_id;
-
-    // Insert into Assigned table
-    const insertAssignedQuery = `
-      INSERT INTO Assigned (registration_id, classroom_id)
-      VALUES (?, ?)
-    `;
-    await transaction.query(insertAssignedQuery, [registrationId, classroom_id]);
-
-    // Get subject_ids from subject_names
-    const subjectIds = [];
-    for (const subjectName of subject_names) {
-      const [subjectRow] = await transaction.query('SELECT subject_id FROM Subject WHERE subject_name = ?', [subjectName]);
-      if (subjectRow.length > 0) {
-        subjectIds.push(subjectRow[0].subject_id);
-      }
-    }
-
-    // Insert into Enrolled table
-    const insertEnrolledQuery = `
-      INSERT INTO Enrolled (registration_id, subject_id)
-      VALUES (?, ?)
-    `;
-    for (const subjectId of subjectIds) {
-      await transaction.query(insertEnrolledQuery, [registrationId, subjectId]);
-    }
+    const [studentResult] = await transaction.query(insertStudentQuery, [
+      registrationId,
+      firstName,
+      middleName,
+      lastName,
+      contactNumber,
+      address,
+      dob,
+    ]);
+    const insertedRegistrationId = studentResult.insertId;
 
     await transaction.commit();
 
-    res.json({ message: 'Student details added successfully' });
+    res.json({ message: "Student details added successfully" });
   } catch (error) {
     await transaction.rollback();
     console.error("Error adding student details:", error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   } finally {
     transaction.release();
   }
 };
-
 
 exports.getStudentDetailsById = async (req, res) => {
   const { registrationId } = req.params; // Assuming registrationId is passed as a route parameter
@@ -82,6 +72,7 @@ exports.getStudentDetailsById = async (req, res) => {
           s.first_name,
           s.middle_name,
           s.last_name,
+          s.dob,
           s.contact_number,
           s.address,
           p.amount AS payment_amount,
@@ -98,7 +89,7 @@ exports.getStudentDetailsById = async (req, res) => {
       WHERE 
           s.registration_id = ?
     `;
-    
+
     // Execute the query with registrationId as parameter
     const [studentDetails] = await pool.query(query, [registrationId]);
 
@@ -106,11 +97,9 @@ exports.getStudentDetailsById = async (req, res) => {
     res.json(studentDetails);
   } catch (error) {
     console.error("Error retrieving student details:", error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
 
 exports.deleteStudentAndRelatedData = async (req, res) => {
   const { registrationId } = req.params; // Assuming registrationId is passed as a route parameter
@@ -120,36 +109,51 @@ exports.deleteStudentAndRelatedData = async (req, res) => {
     await transaction.beginTransaction();
 
     // Delete from Payment table
-    await transaction.query('DELETE FROM Payment WHERE registration_id = ?', [registrationId]);
+    await transaction.query("DELETE FROM Payment WHERE registration_id = ?", [
+      registrationId,
+    ]);
 
     // Delete from Enrolled table
-    await transaction.query('DELETE FROM Enrolled WHERE registration_id = ?', [registrationId]);
+    await transaction.query("DELETE FROM Enrolled WHERE registration_id = ?", [
+      registrationId,
+    ]);
 
     // Delete from Assigned table
-    await transaction.query('DELETE FROM Assigned WHERE registration_id = ?', [registrationId]);
+    await transaction.query("DELETE FROM Assigned WHERE registration_id = ?", [
+      registrationId,
+    ]);
 
     // Delete from Student table
-    await transaction.query('DELETE FROM Student WHERE registration_id = ?', [registrationId]);
+    await transaction.query("DELETE FROM Student WHERE registration_id = ?", [
+      registrationId,
+    ]);
 
     // Commit the transaction
     await transaction.commit();
 
-    res.json({ message: 'Student and related data deleted successfully' });
+    res.json({ message: "Student and related data deleted successfully" });
   } catch (error) {
     // Rollback the transaction if any error occurs
     await transaction.rollback();
     console.error("Error deleting student and related data:", error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   } finally {
     // Release the connection
     transaction.release();
   }
 };
 
-
 exports.updateStudentDetailsById = async (req, res) => {
   const { registrationId } = req.params; // Assuming registrationId is passed as a route parameter
-  const { first_name, middle_name, last_name, contact_number, address, classroom_name, subject_names } = req.body;
+  const {
+    first_name,
+    middle_name,
+    last_name,
+    contact_number,
+    address,
+    classroom_name,
+    subject_names,
+  } = req.body;
 
   const transaction = await pool.getConnection();
 
@@ -166,10 +170,20 @@ exports.updateStudentDetailsById = async (req, res) => {
           address = ?
       WHERE registration_id = ?
     `;
-    await transaction.query(updateStudentQuery, [first_name, middle_name, last_name, contact_number, address, registrationId]);
+    await transaction.query(updateStudentQuery, [
+      first_name,
+      middle_name,
+      last_name,
+      contact_number,
+      address,
+      registrationId,
+    ]);
 
     // Get classroom_id from classroom_name
-    const [classroomRow] = await transaction.query('SELECT classroom_id FROM ClassRoom WHERE name = ?', [classroom_name]);
+    const [classroomRow] = await transaction.query(
+      "SELECT classroom_id FROM ClassRoom WHERE name = ?",
+      [classroom_name]
+    );
     const classroom_id = classroomRow[0].classroom_id;
 
     // Update Assigned room
@@ -178,7 +192,10 @@ exports.updateStudentDetailsById = async (req, res) => {
       SET classroom_id = ?
       WHERE registration_id = ?
     `;
-    await transaction.query(updateAssignedQuery, [classroom_id, registrationId]);
+    await transaction.query(updateAssignedQuery, [
+      classroom_id,
+      registrationId,
+    ]);
 
     // Delete existing enrolled subjects
     const deleteEnrolledQuery = `
@@ -190,7 +207,10 @@ exports.updateStudentDetailsById = async (req, res) => {
     // Get subject_ids from subject_names
     const subjectIds = [];
     for (const subjectName of subject_names) {
-      const [subjectRow] = await transaction.query('SELECT subject_id FROM Subject WHERE subject_name = ?', [subjectName]);
+      const [subjectRow] = await transaction.query(
+        "SELECT subject_id FROM Subject WHERE subject_name = ?",
+        [subjectName]
+      );
       if (subjectRow.length > 0) {
         subjectIds.push(subjectRow[0].subject_id);
       }
@@ -207,11 +227,11 @@ exports.updateStudentDetailsById = async (req, res) => {
 
     await transaction.commit();
 
-    res.json({ message: 'Student details updated successfully' });
+    res.json({ message: "Student details updated successfully" });
   } catch (error) {
     await transaction.rollback();
     console.error("Error updating student details:", error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   } finally {
     transaction.release();
   }

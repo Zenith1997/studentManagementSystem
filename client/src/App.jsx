@@ -9,6 +9,8 @@ import Home from "./pages/Home";
 
 import ErrorPage from "./pages/errorPage";
 import Login from "./pages/Login";
+import StudentDetails from "./pages/StudentDetails";
+import AddStudent from "./pages/AddStudent";
 
 const router = createBrowserRouter([
   {
@@ -19,6 +21,16 @@ const router = createBrowserRouter([
   {
     path: "/home",
     element: <Home />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/student-details/:registrationId",
+    element: <StudentDetails />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/add-student",
+    element: <AddStudent />,
     errorElement: <ErrorPage />,
   },
 ]);

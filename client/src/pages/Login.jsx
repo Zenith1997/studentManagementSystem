@@ -21,8 +21,6 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import axios from "axios";
 import theme from "../Theme/Theme"; // Import custom theme
 function SignIn() {
-  const [token, setToken] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false); // State to manage loading
   const navigate = useNavigate();
 
@@ -41,11 +39,11 @@ function SignIn() {
           password,
         }
       );
-      console.log("Login successful:", response.data);
-      setIsLoggedIn(true);
-      setToken(response.data.token);
+      // console.log("Login successful:", response.data);
+
+      localStorage.setItem("token", response.data.token);
       toast.success("Login successful");
-      
+
       navigate("/home");
     } catch (error) {
       console.error("Login failed:", error.message);
