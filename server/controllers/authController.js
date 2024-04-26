@@ -29,7 +29,7 @@ exports.login = async (req, res) => {
     const token = generateToken(user.UserId);
 
     // Send token in response
-    res.json({ token });
+    res.header('x-auth-token', token).json({ message: "Login successful", token });
   } catch (error) {
     console.error("Error performing login:", error);
     res.status(500).json({ message: "Internal server error" });

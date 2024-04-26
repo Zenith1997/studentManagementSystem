@@ -187,7 +187,6 @@ exports.updateStudentDetailsById = async (req, res) => {
       [classroom_name]
     );
     const classroom_id = classroomRow[0].classroom_id;
-
     // Update Assigned room
     const updateAssignedQuery = `
       UPDATE Assigned
